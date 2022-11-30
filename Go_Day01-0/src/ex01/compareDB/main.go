@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/r3labs/diff"
@@ -76,7 +77,6 @@ func main() {
 		} else {
 			compare(old_recipes, new_recipes)
 		}
-		fmt.Println("E")
 	} else {
 		err = errors.New("invalid flags")
 	}
@@ -85,11 +85,22 @@ func main() {
 	}
 }
 
-func pairs(p []string) string {
+func pairs_change(p []string, recipies *Recipes) string {
 	pairs := make([]string, len(p)/2+len(p)%2)
 	var a, b int
+	var index_rec, index_ing int
 	for a = len(pairs) - 1; b < len(p)&^1; b, a = b+2, a-1 {
-		pairs[a] = fmt.Sprintf("%s %s", p[b], p[b+1])
+		var arg string
+		if p[b] == "Recipes" {
+			index_rec, _ = strconv.Atoi(p[b+1])
+			arg = (*recipies).Recipes[index_rec].Name
+		} else if p[b] == "Ingredient" {
+			index_ing, _ = strconv.Atoi(p[b+1])
+			arg = (*recipies).Recipes[index_rec].Ingredient[index_ing].Itemname
+		} else {
+			arg = p[b+1]
+		}
+		pairs[a] = fmt.Sprintf("%s %s", p[b], arg)
 	}
 	if a == 0 {
 		pairs[a] = p[b]
@@ -108,20 +119,18 @@ func compare(old_recipes, new_recipes *Recipes) {
 					continue
 				}
 				path := v.Path
-				switch v.Type {
-				case diff.CREATE:
-					fmt.Printf("ADDED %s\n", pairs(path))
-				case diff.UPDATE:
-					fmt.Printf("CHANGED %s - %s instead of %s\n", pairs(path), v.To, v.From)
-				case diff.DELETE:
+				if v.Type == diff.CREATE || v.From == "" {
+					fmt.Printf("ADDED %s\n", pairs_change(path, new_recipes))
+				} else if v.Type == diff.DELETE || v.To == "" {
 					switch n := len(path) - 1; path[n] {
 					case "unit":
 						path = append(path, v.From.(string))
 					case "ingredient":
 						path = path[:n]
 					}
-					fmt.Printf("REMOVED %s\n", pairs(path))
-
+					fmt.Printf("REMOVED %s\n", pairs_change(path, old_recipes))
+				} else if v.Type == diff.UPDATE {
+					fmt.Printf("CHANGED %s - %s instead of %s\n", pairs_change(path, old_recipes), v.To, v.From)
 				}
 			}
 		}
