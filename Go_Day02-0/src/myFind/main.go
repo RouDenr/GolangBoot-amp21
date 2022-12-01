@@ -1,26 +1,15 @@
 package main
 
 import (
-	// "flag"
 	"errors"
 	"flag"
 	"fmt"
 	"strings"
 
-	// "io/fs"
 	"io/ioutil"
 	"log"
 	"os"
-	// "fs"
 )
-
-// func print_ln(path string, file fs.FileInfo) error {
-// 	strlink, err := os.Readlink(file.Name())
-// 	if err == nil {
-// 		fmt.Printf("%s -> %s \n", strlink)
-// 	}
-// 	return err
-// }
 
 func recusive_ls(path string, fl _flags) error {
 	files, err := ioutil.ReadDir(path)
@@ -34,7 +23,6 @@ func recusive_ls(path string, fl _flags) error {
 			new_path += file.Name()
 			if file.Mode()&os.ModeSymlink != 0 {
 				if fl.sl {
-					// strlink, err := os.Lstat(file.Name())
 					//! check broken sl
 					strlink, err := os.Readlink(file.Name())
 					if err == nil {
@@ -45,7 +33,7 @@ func recusive_ls(path string, fl _flags) error {
 				if fl.d {
 					fmt.Printf("%s\n", new_path)
 				}
-				recusive_ls(new_path, fl)
+				err = recusive_ls(new_path, fl)
 			} else {
 				if fl.f && strings.HasSuffix(new_path, fl.ext_str) {
 					fmt.Printf("%s\n", new_path)
