@@ -23,11 +23,24 @@ func count_char(arg string) (int, error) {
 
 func myWc(func_count func(string) (int, error), arg string) {
 	result, err := func_count(arg)
-	// fmt.Println("Hi")
 	if err != nil {
 		fmt.Println(err)
 	} else {
 		fmt.Printf("%d\t%s\n", result, arg)
+	}
+}
+
+func switch_count_func(flag_count string) (func(arg string) (int, error)) {
+
+	switch flag_count {
+	case "-w":
+		return count_words
+	case "-m":
+		return count_char
+	case "-l":
+		return  count_lines
+	default:
+		return nil
 	}
 }
 
@@ -40,18 +53,7 @@ func main() {
 		flag_count = "-w"
 	}
 
-	var func_count func(arg string) (int, error)
-
-	switch flag_count {
-	case "-w":
-		func_count = count_words
-	case "-m":
-		func_count = count_char
-	case "-l":
-		func_count = count_lines
-	default:
-
-	}
+	func_count := switch_count_func(flag_count)
 
 	var wg sync.WaitGroup
 	for i, arg := range os.Args {
