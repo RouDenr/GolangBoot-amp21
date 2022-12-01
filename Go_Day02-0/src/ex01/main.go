@@ -5,9 +5,6 @@ import (
 	"errors"
 	"io"
 	"sync"
-	// "unicode"
-
-	// "flag"
 	"fmt"
 	"log"
 	"os"
