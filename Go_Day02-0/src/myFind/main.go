@@ -3,7 +3,10 @@ package main
 import (
 	// "flag"
 	"errors"
+	"flag"
 	"fmt"
+	"strings"
+
 	// "io/fs"
 	"io/ioutil"
 	"log"
@@ -19,7 +22,7 @@ import (
 // 	return err
 // }
 
-func recusive_ls(path string) error {
+func recusive_ls(path string, fl _flags) error {
 	files, err := ioutil.ReadDir(path)
 	if err == nil {
 
@@ -30,28 +33,65 @@ func recusive_ls(path string) error {
 			}
 			new_path += file.Name()
 			if file.Mode()&os.ModeSymlink != 0 {
-				// strlink, err := os.Lstat(file.Name())
-				strlink, err := os.Readlink(file.Name())
-				if err == nil {
-					fmt.Printf("%s -> %s \n", new_path, strlink)
+				if fl.sl {
+					// strlink, err := os.Lstat(file.Name())
+					//! check broken sl
+					strlink, err := os.Readlink(file.Name())
+					if err == nil {
+						fmt.Printf("%s -> %s \n", new_path, strlink)
+					}
 				}
 			} else if file.IsDir() {
-				fmt.Printf("%s\n", new_path)
-				recusive_ls(new_path)
+				if fl.d {
+					fmt.Printf("%s\n", new_path)
+				}
+				recusive_ls(new_path, fl)
 			} else {
-				fmt.Printf("%s\n", new_path)
+				if fl.f && strings.HasSuffix(new_path, fl.ext_str) {
+					fmt.Printf("%s\n", new_path)
+				}
 			}
 		}
 	}
 	return err
 }
 
+// -sl, -d or -f
+// -ext (works ONLY when -f is specified)
+
+// # Finding only *.go files ignoring all the rest.
+// ~$ ./myFind -f -ext 'go' /go
+// /go/src/github.com/mycoolproject/main.go
+// /go/src/github.com/mycoolproject/magic.go
+
+type _flags struct {
+	sl, d, f bool
+	ext_str  string
+}
+
+func set_flags(flags *_flags) {
+	flag.BoolVar(&flags.d, "d", false, "find dirs")
+	flag.BoolVar(&flags.f, "f", false, "find files")
+	flag.BoolVar(&flags.sl, "sl", false, "find symlinks")
+	flag.StringVar(&flags.ext_str, "ext", "", "file's ext")
+
+	flag.Parse()
+
+	if !(flags.d || flags.f || flags.sl) {
+		flags.d, flags.f, flags.sl = true, true, true
+	}
+
+}
+
 func main() {
 	len_args := len(os.Args)
 	if len_args >= 2 {
 
+		var flags _flags
+		set_flags(&flags)
+
 		path := os.Args[len_args-1]
-		if err := recusive_ls(path); err != nil {
+		if err := recusive_ls(path, flags); err != nil {
 			log.Fatal(err)
 		}
 	} else {
