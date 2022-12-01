@@ -14,14 +14,10 @@ import (
 
 //  -l for counting lines, -m for counting characters and -w for counting words.
 
-func count_words(arg string) (int, error) {
+func count_words(r os.File) (int, error) {
 	return 0, nil
 }
-func count_lines(arg string) (int, error) {
-	r, err := os.Open(arg)
-	if err != nil {
-		return 0, err
-	}
+func count_lines(r os.File) (int, error) {
 
     buf := make([]byte, 32*1024)
     count := 0
@@ -40,20 +36,24 @@ func count_lines(arg string) (int, error) {
         }
     }
 }
-func count_char(arg string) (int, error) {
+func count_char(r os.File) (int, error) {
 	return 0, nil
 }
 
-func myWc(func_count func(string) (int, error), arg string) {
-	result, err := func_count(arg)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Printf("%d\t%s\n", result, arg)
+func myWc(func_count func(os.File) (int, error), arg string) error {
+	r, err := os.Open(arg)
+	if err == nil {
+
+		result, err := func_count(*r)
+		if err == nil {
+			fmt.Printf("%d\t%s\n", result, arg)
+		}
+		defer r.Close()
 	}
+	return err
 }
 
-func switch_count_func(flag_count string) (func(arg string) (int, error)) {
+func switch_count_func(flag_count string) (func(os.File) (int, error)) {
 
 	switch flag_count {
 	case "-w":
@@ -85,7 +85,9 @@ func main() {
 		}
 		wg.Add(1)
 		go func (arg string)  {
-			myWc(func_count, arg)
+			if err := myWc(func_count, arg); err != nil {
+				fmt.Println(err)
+			}
 			defer wg.Done()
 		}(arg)
 	}
