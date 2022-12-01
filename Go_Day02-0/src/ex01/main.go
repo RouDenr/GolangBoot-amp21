@@ -71,7 +71,21 @@ func count_lines(r os.File) (int, error) {
 	}
 }
 func count_char(r os.File) (int, error) {
-	return 0, nil
+	buf := make([]byte, 32*1024)
+	count := 0
+
+	for {
+		c, err := r.Read(buf)
+		count += len(buf[:c])
+
+		switch {
+		case err == io.EOF:
+			return count, nil
+
+		case err != nil:
+			return count, err
+		}
+	}
 }
 
 func myWc(func_count func(os.File) (int, error), arg string) error {
