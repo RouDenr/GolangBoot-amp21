@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"sync"
+
 	// "flag"
 	"fmt"
 	"log"
@@ -15,7 +18,27 @@ func count_words(arg string) (int, error) {
 	return 0, nil
 }
 func count_lines(arg string) (int, error) {
-	return 0, nil
+	r, err := os.Open(arg)
+	if err != nil {
+		return 0, err
+	}
+
+    buf := make([]byte, 32*1024)
+    count := 0
+    lineSep := []byte{'\n'}
+
+    for {
+        c, err := r.Read(buf)
+        count += bytes.Count(buf[:c], lineSep)
+
+        switch {
+        case err == io.EOF:
+            return count, nil
+
+        case err != nil:
+            return count, err
+        }
+    }
 }
 func count_char(arg string) (int, error) {
 	return 0, nil
