@@ -1,0 +1,14 @@
+GET http://localhost:8081/shopping-items
+
+### new shopping
+POST http://localhost:8081/shopping-items
+Content-Type: application/json
+
+{
+    "name": "Pasta"}
+{
+    "name": "Help"
+}
+
+### Remove shopping
+DELETE http://localhost:8081/shopping-items/25d348cd-d2a3-467f-aded-27a47dc94d36
